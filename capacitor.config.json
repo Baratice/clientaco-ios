@@ -1,0 +1,14 @@
+{
+  "appId": "com.base6ae11cbaa5cc8360e26f0e7d.app",
+  "appName": "Clientaço",
+  "webDir": "www",
+  "server": {
+    "url": "https://app.clientaco.com.br",
+    "allowNavigation": ["clientaco.com.br", "*.clientaco.com.br", "*.base44.app", "*.base44.com"]
+  },
+  "ios": {
+    "appendUserAgent": "ClientacoApp",
+    "contentInset": "never",
+    "limitsNavigationsToAppBoundDomains": false
+  }
+}
