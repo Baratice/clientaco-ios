@@ -14,14 +14,15 @@ definitions:
       PL=ios/App/App/Info.plist
       B=/usr/libexec/PlistBuddy
       $B -c "Set :CFBundleDisplayName Clientaço" "$PL" || $B -c "Add :CFBundleDisplayName string Clientaço" "$PL"
-      $B -c "Set :CFBundleShortVersionString 1.0" "$PL" || true
+      $B -c "Set :CFBundleShortVersionString 1.0.1" "$PL" || true
       $B -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PL" || true
       $B -c "Add :NSCameraUsageDescription string 'O Clientaço usa a câmera para ler o QR code de vouchers e para tirar fotos de atendimentos.'" "$PL" || true
       $B -c "Add :NSPhotoLibraryUsageDescription string 'O Clientaço acessa suas fotos quando você escolhe uma imagem para a ficha da cliente.'" "$PL" || true
       $B -c "Add :NSMicrophoneUsageDescription string 'O Clientaço usa o microfone quando você fala com a sua agenda pelo assistente de voz.'" "$PL" || true
+      $B -c "Add :NSSpeechRecognitionUsageDescription string 'O Clientaço transforma sua fala em texto quando você fala com a sua agenda pelo assistente de voz.'" "$PL" || true
       $B -c "Add :NSContactsUsageDescription string 'O Clientaço acessa seus contatos apenas quando você escolhe importar clientes.'" "$PL" || true
       $B -c "Delete :UISupportedInterfaceOrientations~ipad" "$PL" || true
-      sed -i "" 's/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = 1.0;/g' "$P"
+      sed -i "" 's/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = 1.0.1;/g' "$P"
       ICONE=ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
       curl -fsSL https://app.clientaco.com.br/icon-1024.png -o /tmp/icone.png
       sips -s format jpeg /tmp/icone.png --out /tmp/icone.jpg
