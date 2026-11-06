@@ -139,5 +139,16 @@ workflows:
           }
           G
           ./gradlew bundleRelease
+      - name: Conferir AAB
+        script: |
+          set -e
+          AAB=$(ls android/app/build/outputs/bundle/release/*.aab)
+          echo "Certificado que assinou o AAB (deve ser SHA1 16:1E:F4:94...):"
+          keytool -printcert -jarfile "$AAB" | grep -E "Owner|SHA1"
+          keytool -printcert -jarfile "$AAB" | grep -q "16:1E:F4:94:72:20:E1:76" || { echo "ASSINATURA ERRADA"; exit 1; }
+          MF=$(find android/app/build/intermediates -name AndroidManifest.xml -path "*release*" | grep -i merged | head -1)
+          echo "Manifesto: $MF"
+          grep -oE 'android:name="android.permission.[A-Z_]+"|versionCode="[0-9]+"|versionName="[^"]+"|RecognitionService' "$MF" | sort -u
+          grep -q RECORD_AUDIO "$MF" || { echo "SEM PERMISSAO DE MICROFONE"; exit 1; }
     artifacts:
       - android/app/build/outputs/bundle/release/*.aab
