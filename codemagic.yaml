@@ -87,3 +87,57 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: false
+  android-play:
+    # Android do Clientaço (mesma casca do iOS). Assinado com a chave de envio "clientaco_upload",
+    # cadastrada pelo Carlos em Codemagic > Code signing identities > Android keystores.
+    # Só funciona no Play depois que o Google aprovar a troca da chave de envio.
+    name: Clientaço Android (AAB para o Google Play)
+    max_build_duration: 30
+    instance_type: linux_x2
+    environment:
+      android_signing:
+        - clientaco_upload
+      node: 22
+      java: 21
+      vars:
+        VERSAO_NOME: "1.0.1"
+        VERSAO_CODIGO: "2"
+    scripts:
+      - name: Projeto Android
+        script: |
+          set -e
+          npm install --no-audit --no-fund
+          npx cap add android
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q RECORD_AUDIO "$M" || sed -i 's#<application#<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries>\n    <application#' "$M"
+          G=android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode $VERSAO_CODIGO/; s/versionName \"[^\"]*\"/versionName \"$VERSAO_NOME\"/" "$G"
+          grep -E "applicationId|versionCode|versionName" "$G"
+          for d in mipmap-mdpi:48 mipmap-hdpi:72 mipmap-xhdpi:96 mipmap-xxhdpi:144 mipmap-xxxhdpi:192; do
+            P=${d%%:*}; S=${d##*:}
+            curl -fsSL https://app.clientaco.com.br/icon-1024.png -o /tmp/ic.png
+            convert /tmp/ic.png -resize ${S}x${S} android/app/src/main/res/$P/ic_launcher.png
+            cp android/app/src/main/res/$P/ic_launcher.png android/app/src/main/res/$P/ic_launcher_round.png
+          done
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          npx cap sync android
+      - name: Gerar AAB assinado
+        script: |
+          set -e
+          cd android
+          cat >> app/build.gradle <<'G'
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("CM_KEYSTORE_PATH"))
+                      storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("CM_KEY_ALIAS")
+                      keyPassword System.getenv("CM_KEY_PASSWORD")
+                  }
+              }
+              buildTypes { release { signingConfig signingConfigs.release } }
+          }
+          G
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
